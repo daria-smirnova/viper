@@ -1,6 +1,6 @@
 My comments:
 
-CAN DO: Image QA, Object detection
+CAN DO: vision-language tasks like image captioning, visual question answering (VQA), and image-text retrieval. Using BLIP.
 
 conda activate vipergpt
 jupyter notebook
