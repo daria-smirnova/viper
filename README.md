@@ -1,3 +1,19 @@
+My comments:
+
+CAN DO: Image QA, Object detection
+
+conda activate vipergpt
+jupyter notebook
+- load in 8-bit with offload
+- use download_models.sh
+- do not load Blip (GPU memory might not be enough), or change to smaller Blip
+- TCL_4M URL link doesn't work. Need to download manually
+- main_simple_lib from datasets.dataset import MyDataset ---> my_dataset instead of datasets
+- base_config: line 50 gpt-3.5-turbo --> codex?
+- main_simple_lib line 327 - added clean_code(code) function to remove unnecessary characters
+
+
+
 # ViperGPT: Visual Inference via Python Execution for Reasoning
 
 This is the code for the paper [ViperGPT: Visual Inference via Python Execution for Reasoning](https://viper.cs.columbia.edu) by [Dídac Surís](https://www.didacsuris.com/)\*, [Sachit Menon](https://sachit-menon.github.io/)\* and [Carl Vondrick](https://www.cs.columbia.edu/~vondrick/).
