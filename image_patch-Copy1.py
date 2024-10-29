@@ -428,7 +428,6 @@ def llm_query(query, context=None, long_answer=True, queues=None):
     query: str
         the text question to ask. Must not contain any reference to 'the image' or 'the photo', etc.
     """
-    print("Query is " + str(query))
     if long_answer:
         return forward(model_name='gpt3_general', prompt=query, queues=queues)
     else:

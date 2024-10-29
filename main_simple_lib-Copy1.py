@@ -3,9 +3,6 @@ import ast
 import math
 import sys
 import time
-import io
-
-import torchvision.transforms as transforms
 
 import requests
 import torch.multiprocessing as mp
@@ -36,10 +33,6 @@ from vision_processes import forward, finish_all_consumers  # This import loads 
 from image_patch import *
 from video_segment import *
 from datasets.my_dataset import MyDataset
-
-import ast
-from rich.console import Console
-from rich.syntax import Syntax
 
 console = Console(highlight=False, force_terminal=False)
 
@@ -197,7 +190,7 @@ def CodexAtLine(lineno, syntax, time_wait_between_lines=1.):
 def show_all(lineno, value, valuename, fig=None, usefig=True, disp=True, console_in=None, time_wait_between_lines=None,
              lastlineno=[-1]):
     time.sleep(0.1)  # to avoid race condition!
-    
+
     if console_in is None:
         console_in = console
 
@@ -229,7 +222,7 @@ def show_all(lineno, value, valuename, fig=None, usefig=True, disp=True, console
         else:
             console_in.print(f"{rich_escape(valuename)} is empty")
     elif isinstance(thing_to_show, dict):
-        if len(thing_to_show) > code:
+        if len(thing_to_show) > 0:
             for i, (thing_k, thing_v) in enumerate(thing_to_show.items()):
                 disp_ = disp or i < len(thing_to_show) - 1
                 show_all(None, thing_v, f"{rich_escape(valuename)}['{thing_k}']", fig=fig, disp=disp_, usefig=usefig)
@@ -248,7 +241,7 @@ def show_all(lineno, value, valuename, fig=None, usefig=True, disp=True, console
         if disp:
             display(fig)
 
-'''
+
 def load_image(path):
     if path.startswith("http://") or path.startswith("https://"):
         image = Image.open(requests.get(path, stream=True).raw).convert('RGB')
@@ -257,36 +250,6 @@ def load_image(path):
         image = Image.open(path)
         image = transforms.ToTensor()(image)
     return image
-'''
-
-def load_image(path):
-    if path.startswith("http://") or path.startswith("https://"):
-        try:
-            # Adding User-Agent to avoid potential 403 errors
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'}
-            response = requests.get(path, headers=headers, stream=True)
-            
-            # Ensure response is successful
-            if response.status_code == 200:
-                # Use BytesIO to wrap the content and open it as an image
-                image = Image.open(io.BytesIO(response.content)).convert('RGB')
-            else:
-                raise ValueError(f"Error fetching image: {response.status_code}")
-        
-        except Exception as e:
-            print(f"Failed to load image from URL: {e}")
-            raise
-    else:
-        # Load local file directly
-        try:
-            image = Image.open(path).convert('RGB')
-        except Exception as e:
-            print(f"Failed to load local image: {e}")
-            raise
-    
-    # Convert the image to a tensor
-    image_tensor = transforms.ToTensor()(image)
-    return image_tensor
 
 def is_code_complete(code: str) -> bool:
     """
@@ -322,41 +285,14 @@ def is_code_complete(code: str) -> bool:
     
     return True
 
-
-
-def clean_code(code: str) -> str:
-    # Remove unwanted characters like backticks and triple quotes
-    unwanted_patterns = ["'''", '"""', '```']  # Add any other unwanted characters or patterns here
-    
-    # Remove unwanted patterns
-    for pattern in unwanted_patterns:
-        code = code.replace(pattern, "")  # Remove the unwanted patterns
-
-    # Split the code into lines
-    lines = code.splitlines()
-
-    # Remove the first and last lines
-    if len(lines) > 2:  # Only do this if there are more than 2 lines
-        cleaned_lines = lines[1:]  # Keep only the lines between the first and last
-    else:
-        cleaned_lines = []  # If there are not enough lines, return an empty list
-
-    # Join the cleaned lines back into a single string and strip any additional whitespace
-    cleaned_code = "\n".join(cleaned_lines)
-
-    return cleaned_code  # Return the cleaned code
-
-
 def get_code(query):
     model_name_codex = 'codellama' if config.codex.model == 'codellama' else 'codex'
     code = forward(model_name_codex, prompt=query, input_type="image")
-    if config.codex.model not in ('gpt-3.5-turbo', 'gpt-4', 'gpt-4o-mini-2024-07-18'):
+    if config.codex.model not in ('gpt-3.5-turbo', 'gpt-4'):
         code = f'def execute_command(image, my_fig, time_wait_between_lines, syntax):' + code # chat models give execute_command due to system behaviour
     code_for_syntax = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")
     syntax_1 = Syntax(code_for_syntax, "python", theme="monokai", line_numbers=True, start_line=0)
     console.print(syntax_1)
-    code = clean_code(code)
-    console.print(code)
     code = ast.unparse(ast.parse(code))
     code_for_syntax_2 = code.replace("(image, my_fig, time_wait_between_lines, syntax)", "(image)")
     syntax_2 = Syntax(code_for_syntax_2, "python", theme="monokai", line_numbers=True, start_line=0)

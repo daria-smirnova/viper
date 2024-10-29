@@ -818,7 +818,7 @@ class GPT3Model(BaseModel):
         if self.n_votes > 1:
             response_ = []
             for i in range(len(prompts)):
-                if self.model in ['chatgpt', 'gpt-4o-mini-2024-07-18']:
+                if self.model == 'chatgpt':
                     resp_i = [r['message']['content'] for r in
                               response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
                 else:
@@ -826,7 +826,7 @@ class GPT3Model(BaseModel):
                 response_.append(self.most_frequent(resp_i).lstrip())
             response = response_
         else:
-            if self.model in ['chatgpt', 'gpt-4o-mini-2024-07-18']:
+            if self.model == 'chatgpt':
                 response = [r['message']['content'].lstrip() for r in response['choices']]
             else:
                 response = [r['text'].lstrip() for r in response['choices']]
@@ -849,7 +849,7 @@ class GPT3Model(BaseModel):
         if self.n_votes > 1:
             response_ = []
             for i in range(len(prompts)):
-                if self.model in ['chatgpt', 'gpt-4o-mini-2024-07-18']:
+                if self.model == 'chatgpt':
                     resp_i = [r['message']['content'] for r in
                               response['choices'][i * self.n_votes:(i + 1) * self.n_votes]]
                 else:
@@ -857,7 +857,7 @@ class GPT3Model(BaseModel):
                 response_.append(self.most_frequent(resp_i))
             response = response_
         else:
-            if self.model in ['chatgpt', 'gpt-4o-mini-2024-07-18']:
+            if self.model == 'chatgpt':
                 response = [r['message']['content'] for r in response['choices']]
             else:
                 response = [self.process_answer(r["text"]) for r in response['choices']]
@@ -868,7 +868,6 @@ class GPT3Model(BaseModel):
                                    stop=["\n", "<|endoftext|>"])
         return response
 
-    '''
     def get_general(self, prompts) -> list[str]:
         response = self.query_gpt3(prompts, model=self.model, max_tokens=256, top_p=1, frequency_penalty=0,
                                    presence_penalty=0)
@@ -877,72 +876,19 @@ class GPT3Model(BaseModel):
         else:
             response = [r["text"] for r in response['choices']]
         return response
-    
 
-    def get_general(self, prompts) -> list[str]:
-        # Structure the prompt into a messages format expected by ChatGPT or GPT-4-turbo
-        messages = [{"role": "user", "content": prompt} for prompt in prompts]
-    
-        # Query the model, ensuring the correct arguments are passed
-        response = self.query_gpt3(prompts=prompts, model=self.model, max_tokens=256, top_p=1, 
-                                   frequency_penalty=0, presence_penalty=0)
-        
-        # Handling responses based on model type
-        if self.model in ['chatgpt', 'gpt-4o-mini-2024-07-18']:
-            # Extract the response from 'message' field if using ChatGPT or GPT-4-turbo
-            response = [r['message']['content'] for r in response['choices']]
-        else:
-            # Fallback for models that use 'text' field (e.g., GPT-3)
-            response = [r["text"] for r in response['choices']]
-        
-        return response
-'''
-    
-    def get_general(self, prompts) -> list[str]:
-        # Structure the prompt into a messages format expected by ChatGPT or GPT-4-turbo
-        messages = [{"role": "user", "content": prompt} for prompt in prompts]
-        
-        # Query the model, ensuring the correct arguments are passed
-        try:
-            response = self.query_gpt3(
-                prompts=prompts, 
-                model=self.model, 
-                max_tokens=256, 
-                top_p=1, 
-                frequency_penalty=0, 
-                presence_penalty=0
-            )
-        except Exception as e:
-            print(f"Error in querying model: {e}")
-            return []
-    
-        # Ensure `choices` is present and populated
-        if not hasattr(response, 'choices') or not response.choices:
-            print("Error: No choices found in the response.")
-            return []
-    
-        # Extract response content correctly for Chat Completions API
-        try:
-            response_texts = [choice.message.content for choice in response.choices]
-        except AttributeError as e:
-            print(f"Error accessing response content: {e}")
-            return []
-    
-        return response_texts
-
-    '''
-    def query_gpt3(self, prompt, model="gpt-4o-mini-2024-07-18", max_tokens=16, logprobs=None, stream=False,
+    def query_gpt3(self, prompt, model="text-davinci-003", max_tokens=16, logprobs=None, stream=False,
                    stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
         if model == "chatgpt":
             messages = [{"role": "user", "content": p} for p in prompt]
-            response = openai.chat.completions.create(
-                model="gpt-4o-mini-2024-07-18",
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=self.temperature,
             )
         else:
-            response = openai.chat.completions.create(
+            response = openai.Completion.create(
                 model=model,
                 prompt=prompt,
                 max_tokens=max_tokens,
@@ -956,32 +902,7 @@ class GPT3Model(BaseModel):
                 n=self.n_votes,
             )
         return response
-    '''
-    
-    def query_gpt3(self, prompts, model="gpt-4o-mini-2024-07-18", max_tokens=16, logprobs=None, stream=False,
-                   stop=None, top_p=1, frequency_penalty=0, presence_penalty=0):
-        # If the model is chatgpt or gpt-4o-mini, structure the input as messages
-        if model in ["chatgpt", "gpt-4o-mini-2024-07-18"]:
-            # Prepare messages format for models that expect conversational input
-            messages = [{"role": "user", "content": p} for p in prompts]
-            response = openai.chat.completions.create(
-                model=model,  # Ensure correct model is used
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=self.temperature,
-            )
-        else:
-            # For non-chat models, use plain prompt
-            # Prepare messages format for models that expect conversational input
-            messages = [{"role": "user", "content": p} for p in prompts]
-            response = openai.chat.completions.create(
-                model=model,  # Ensure correct model is used
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=self.temperature,
-            )
-        return response
-    
+
     def forward(self, prompt, process_name):
         if not self.to_batch:
             prompt = [prompt]
@@ -1041,7 +962,7 @@ def codex_helper(extended_prompt):
     assert 1 <= config.codex.best_of <= 20, "Best of must be between 1 and 20."
 
     # Handling different models
-    if config.codex.model in ("gpt-4", "gpt-3.5-turbo", "gpt-4o-mini-2024-07-18"):
+    if config.codex.model in ("gpt-4", "gpt-3.5-turbo"):
         # Ensure extended_prompt is a list
         if not isinstance(extended_prompt, list):
             extended_prompt = [extended_prompt]
@@ -1074,7 +995,7 @@ def codex_helper(extended_prompt):
     else:
         # Handling deprecated Codex model
         warnings.warn('OpenAI Codex is deprecated. Please use GPT-4 or GPT-3.5-turbo.')
-        response = openai.chat.completions.create(
+        response = openai.Completion.create(
             model="code-davinci-002",
             temperature=config.codex.temperature,
             prompt=extended_prompt,

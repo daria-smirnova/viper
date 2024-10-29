@@ -238,12 +238,15 @@ class ImagePatch:
         return self.left <= right and self.right >= left and self.lower <= upper and self.upper >= lower
 
     def llm_query(self, question: str, long_answer: bool = True) -> str:
-        '''Answers a text question using GPT-3. The input question is always a formatted string with a variable in it.
+        '''
+        STRICTLY: Answers a TEXT question using GPT-4o-mini. 
+        STRICTLY: The input question is ALWAYS a formatted string with a variable in it. You are NOT ALLOWED to use llm_query without a formatted variable.
+        TO answer questions about an image use simple_query. Follow examples PRECISELY.
 
         Parameters
         ----------
         question: str
-            the text question to ask. Must not contain any reference to 'the image' or 'the photo', etc.
+            the text question to ask. Must NOT contain any reference to 'the image' or 'the photo', etc.
         long_answer: bool
             whether to return a short answer or a long answer. Short answers are one or at most two words, very concise.
             Long answers are longer, and may be paragraphs and explanations. Defalt is True (so long answer).
@@ -334,6 +337,6 @@ Write a function using Python and the ImagePatch class (above) that could be exe
 
 Consider the following guidelines:
 - Use base Python (comparison, sorting) for basic logical operations, left/right/up/down, math, etc.
-- Use the llm_query function to access external information and answer informational questions not concerning the image.
+- Use the llm_query function ONLY to access external information and answer informational questions NOT concerning the image. 
 
 Query: INSERT_QUERY_HERE
